@@ -97,6 +97,11 @@ class GeneratePlanSerializer(serializers.Serializer):
     title = serializers.CharField(required=False, allow_blank=True, max_length=255)
 
 
+class PlannerAIRequestSerializer(serializers.Serializer):
+    model = serializers.CharField(required=False, allow_blank=True, max_length=64)
+    question = serializers.CharField(max_length=2000)
+
+
 class SessionStatusUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=["planned", "completed", "missed", "skipped", "rescheduled"])
 

@@ -8,12 +8,14 @@ from rest_framework.views import APIView
 from apps.planner.models import PlannerLog, StudyPlan, StudySession
 from apps.planner.serializers import (
     GeneratePlanSerializer,
+    PlannerAIRequestSerializer,
     PlannerLogSerializer,
     RescheduleSessionSerializer,
     SessionStatusUpdateSerializer,
     StudyPlanSerializer,
     StudySessionSerializer,
 )
+from apps.planner.ai_service import PlannerAIService
 from apps.planner.services import PlannerService
 from apps.progress.services import ProgressService
 from common.permissions import IsAdmin, IsStudent
@@ -138,5 +140,22 @@ class PlannerLogListView(APIView):
             "page": page.number,
         }
         return api_success(data, "Planner logs fetched successfully.")
+
+
+class PlannerAIModelsView(APIView):
+    permission_classes = [IsStudent]
+
+    def get(self, request):
+        return api_success(PlannerAIService.supported_models(), "AI models fetched successfully.")
+
+
+class PlannerAIAssistantView(APIView):
+    permission_classes = [IsStudent]
+
+    def post(self, request):
+        serializer = PlannerAIRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = PlannerAIService.study_assistant(user=request.user, **serializer.validated_data)
+        return api_success(data, "AI study guidance generated successfully.")
 
 # Create your views here.

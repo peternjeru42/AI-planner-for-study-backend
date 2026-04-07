@@ -1,6 +1,8 @@
 from django.urls import path
 
 from apps.planner.views import (
+    PlannerAIAssistantView,
+    PlannerAIModelsView,
     PlannerCurrentView,
     PlannerGenerateView,
     PlannerLogListView,
@@ -15,6 +17,8 @@ from apps.planner.views import (
 
 
 urlpatterns = [
+    path("ai/models/", PlannerAIModelsView.as_view(), name="planner-ai-models"),
+    path("ai/assistant/", PlannerAIAssistantView.as_view(), name="planner-ai-assistant"),
     path("generate/", PlannerGenerateView.as_view(), name="planner-generate"),
     path("regenerate/", PlannerRegenerateView.as_view(), name="planner-regenerate"),
     path("current/", PlannerCurrentView.as_view(), name="planner-current"),
