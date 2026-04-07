@@ -22,6 +22,22 @@ from rest_framework.views import APIView
 from common.utils import api_success
 
 
+class RootView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return api_success(
+            {
+                "service": "AI Study Planner Backend",
+                "status": "online",
+                "adminUrl": "/admin/",
+                "healthUrl": "/api/health/",
+                "apiBaseUrl": "/api/",
+            },
+            "AI Study Planner backend is running.",
+        )
+
+
 class HealthView(APIView):
     permission_classes = [AllowAny]
 
@@ -30,6 +46,7 @@ class HealthView(APIView):
 
 
 urlpatterns = [
+    path("", RootView.as_view(), name="root"),
     path("admin/", admin.site.urls),
     path("api/health/", HealthView.as_view(), name="health"),
     path("api/auth/", include("apps.accounts.urls")),
