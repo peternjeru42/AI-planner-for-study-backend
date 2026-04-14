@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
+RUNNING_ON_RAILWAY = bool(os.environ.get("RAILWAY_ENVIRONMENT"))
 
 
 def env(key: str, default: str | None = None) -> str | None:
@@ -128,6 +129,12 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+if RUNNING_ON_RAILWAY and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    raise RuntimeError(
+        "Railway deployment started without Postgres configuration. "
+        "Set DATABASE_URL or the PG*/POSTGRES_* environment variables."
+    )
 
 AUTH_USER_MODEL = "accounts.User"
 
