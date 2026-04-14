@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import parse_qsl, unquote, urlparse
 
 from dotenv import load_dotenv
 
@@ -11,6 +12,28 @@ load_dotenv(BASE_DIR / ".env")
 
 def env(key: str, default: str | None = None) -> str | None:
     return os.environ.get(key, default)
+
+
+def parse_database_url(database_url: str) -> dict:
+    parsed = urlparse(database_url)
+    if parsed.scheme not in {"postgres", "postgresql"}:
+        raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
+
+    database_config = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": unquote(parsed.path.lstrip("/")),
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "localhost",
+        "PORT": str(parsed.port or "5432"),
+    }
+
+    query_params = dict(parse_qsl(parsed.query))
+    ssl_mode = query_params.get("sslmode")
+    if ssl_mode:
+        database_config["OPTIONS"] = {"sslmode": ssl_mode}
+
+    return database_config
 
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", "django-insecure-studyflow-dev-key")
@@ -73,16 +96,21 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-POSTGRES_DB = env("POSTGRES_DB")
-POSTGRES_USER = env("POSTGRES_USER")
-POSTGRES_PASSWORD = env("POSTGRES_PASSWORD")
-POSTGRES_HOST = env("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = env("POSTGRES_PORT", "5432")
+DATABASE_URL = env("DATABASE_URL")
+POSTGRES_DB = env("POSTGRES_DB") or env("PGDATABASE")
+POSTGRES_USER = env("POSTGRES_USER") or env("PGUSER")
+POSTGRES_PASSWORD = env("POSTGRES_PASSWORD") or env("PGPASSWORD")
+POSTGRES_HOST = env("POSTGRES_HOST") or env("PGHOST") or "localhost"
+POSTGRES_PORT = env("POSTGRES_PORT") or env("PGPORT") or "5432"
 OPENAI_API_KEY = env("OPENAI_API_KEY") or env("OPEN_AI_API_KEY")
 OPEN_AI_API_KEY = env("OPEN_AI_API_KEY")
 OPENAI_DEFAULT_MODEL = env("OPENAI_DEFAULT_MODEL", "gpt-5-mini")
 
-if POSTGRES_DB and POSTGRES_USER and POSTGRES_PASSWORD:
+if DATABASE_URL:
+    DATABASES = {
+        "default": parse_database_url(DATABASE_URL),
+    }
+elif POSTGRES_DB and POSTGRES_USER and POSTGRES_PASSWORD:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
