@@ -1,4 +1,4 @@
-# AI Study Planner Backend
+# AI-planner-for-study-backend
 
 Django REST backend for StudyFlow.
 
