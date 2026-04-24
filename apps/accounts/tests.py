@@ -48,4 +48,16 @@ def test_login_returns_tokens_and_profile():
     assert "access" in response.data["data"]
     assert "refresh" in response.data["data"]
 
+
+@pytest.mark.django_db
+def test_me_works_without_login_as_guest():
+    client = APIClient()
+
+    response = client.get("/api/auth/me/")
+
+    assert response.status_code == 200
+    assert response.data["success"] is True
+    assert response.data["data"]["user"]["email"] == "guest@example.com"
+    assert response.data["data"]["profile"] is not None
+
 # Create your tests here.
