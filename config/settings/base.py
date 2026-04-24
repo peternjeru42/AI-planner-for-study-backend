@@ -1,4 +1,5 @@
 import os
+import warnings
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qsl, unquote, urlparse
@@ -25,7 +26,7 @@ def parse_database_url(database_url: str) -> dict:
     database_url = database_url.strip()
     if len(database_url) >= 2 and database_url[0] == database_url[-1] and database_url[0] in {'"', "'"}:
         database_url = database_url[1:-1].strip()
-    if database_url.startswith("${{") and database_url.endswith("}}"):
+    if is_unresolved_reference(database_url):
         raise ValueError(
             "DATABASE_URL is an unresolved Railway reference. "
             "Attach a Postgres service or set DATABASE_URL to the resolved Postgres connection URL."
@@ -50,6 +51,10 @@ def parse_database_url(database_url: str) -> dict:
         database_config["OPTIONS"] = {"sslmode": ssl_mode}
 
     return database_config
+
+
+def is_unresolved_reference(value: str | None) -> bool:
+    return bool(value and value.strip().startswith("${{") and value.strip().endswith("}}"))
 
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", "django-insecure-studyflow-dev-key")
@@ -123,7 +128,7 @@ OPENAI_API_KEY = env("OPENAI_API_KEY") or env("OPEN_AI_API_KEY")
 OPEN_AI_API_KEY = env("OPEN_AI_API_KEY")
 OPENAI_DEFAULT_MODEL = env("OPENAI_DEFAULT_MODEL", "gpt-5-mini")
 
-if DATABASE_URL:
+if DATABASE_URL and not is_unresolved_reference(DATABASE_URL):
     DATABASES = {
         "default": parse_database_url(DATABASE_URL),
     }
@@ -147,9 +152,11 @@ else:
     }
 
 if RUNNING_ON_RAILWAY and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
-    raise RuntimeError(
-        "Railway deployment started without Postgres configuration. "
-        "Set DATABASE_URL or the PG*/POSTGRES_* environment variables."
+    warnings.warn(
+        "Railway deployment started without resolved Postgres configuration. "
+        "Using SQLite fallback; data will not survive redeploys. "
+        "Set DATABASE_URL or the PG*/POSTGRES_* environment variables for production.",
+        RuntimeWarning,
     )
 
 AUTH_USER_MODEL = "accounts.User"
