@@ -12,10 +12,25 @@ RUNNING_ON_RAILWAY = bool(os.environ.get("RAILWAY_ENVIRONMENT"))
 
 
 def env(key: str, default: str | None = None) -> str | None:
-    return os.environ.get(key, default)
+    value = os.environ.get(key, default)
+    if value is None:
+        return None
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1].strip()
+    return value
 
 
 def parse_database_url(database_url: str) -> dict:
+    database_url = database_url.strip()
+    if len(database_url) >= 2 and database_url[0] == database_url[-1] and database_url[0] in {'"', "'"}:
+        database_url = database_url[1:-1].strip()
+    if database_url.startswith("${{") and database_url.endswith("}}"):
+        raise ValueError(
+            "DATABASE_URL is an unresolved Railway reference. "
+            "Attach a Postgres service or set DATABASE_URL to the resolved Postgres connection URL."
+        )
+
     parsed = urlparse(database_url)
     if parsed.scheme not in {"postgres", "postgresql"}:
         raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
