@@ -39,7 +39,8 @@ def parse_database_url(database_url: str) -> dict:
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", "django-insecure-studyflow-dev-key")
 DEBUG = env("DJANGO_DEBUG", "False").lower() == "true"
-ALLOWED_HOSTS = [host.strip() for host in env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,testserver").split(",") if host.strip()]
+DEFAULT_ALLOWED_HOSTS = "127.0.0.1,localhost,testserver,.up.railway.app,ai-planner-for-study-backend-production.up.railway.app"
+ALLOWED_HOSTS = [host.strip() for host in env("DJANGO_ALLOWED_HOSTS", DEFAULT_ALLOWED_HOSTS).split(",") if host.strip()]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -155,7 +156,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",") if origin.strip()]
+DEFAULT_CORS_ALLOWED_ORIGINS = "http://localhost:3000,https://ai-planner-for-study-frontend.vercel.app"
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env("CORS_ALLOWED_ORIGINS", DEFAULT_CORS_ALLOWED_ORIGINS).split(",") if origin.strip()]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    regex.strip()
+    for regex in env("CORS_ALLOWED_ORIGIN_REGEXES", r"^https://.*\.vercel\.app$").split(",")
+    if regex.strip()
+]
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
